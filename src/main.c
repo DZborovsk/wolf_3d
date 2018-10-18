@@ -12,129 +12,59 @@
 
 #include "../include/wolf3d.h"
 
-int 	ft_count_w(char *s)
+void	position(t_st *e)
 {
-	int 	i;
+	int		i;
+	int		j;
 
 	i = 0;
-	while (s[i])
+	while (i < e->map_h)
 	{
-		if (s[i] == '\n')
-			return (i);
-		i++;
-	}
-	return (i);
-}
-
-int 	ft_count_nl(char *s)
-{
-	int 	i;
-	int 	nl;
-
-	nl = 0;
-	i = 0;
-	while (s[i])
-	{
-		if (s[i] == '\n')
-			nl++;
-		i++;
-	}
-	return (nl);
-}
-
-char 	*ft_read(int fd)
-{
-	int 	rd;
-	char	buff[BUFF_SIZE + 1];
-	char 	*s;
-	char 	*tmp;
-
-	s = ft_strdup("");
-	while ((rd = read(fd, buff, BUFF_SIZE)) > 0)
-	{
-		buff[rd] = '\0';
-		tmp = s;
-		s = ft_strjoin(s, buff);
-		free(tmp);
-	}
-	return (s);
-}
-
-void			ft_open(t_st *wolf, char *file)
-{
-	int		fd;
-	char	**array;
-	int 	y;
-	char 	*s;
-	int 	nl;
-	int 	i;
-	int 	width;
-	int 	k;
-
-	nl = 0;
-	y = 0;
-	if ((fd = open(file, O_RDONLY)) == -1)
-	{
-		ft_putendl("Open file fail (Error -1)");
-		free(wolf);
-		exit(0);
-	}
-	s = ft_read(fd);
-//	ft_putstr(s);
-	nl = ft_count_nl(s);
-//	ft_putnbr(nl);
-	array = (char**)malloc(sizeof(char*) * (nl + 1));
-	array[nl] = NULL;
-//	ft_putstr(s);
-	width = ft_count_w(s);
-//	ft_putnbr(width);
-	k = 0;
-	while (nl > y)
-	{
-		i = 0;
-		array[y] = (char*)malloc(sizeof(char) * (width));
-		while (s[k] && s[k] != '\n')
+		j = 0;
+		while (j < e->map_w)
 		{
-			array[y][i] = s[k];
-			i++;
-			k++;
+			if (e->map[i][j] == 0)
+			{
+				e->posx = j;
+				e->posy = i;
+				return ;
+			}
+			j++;
 		}
-		array[y][i] = '\0';
-		if (s[k] == '\n')
-			k++;
-		y++;
+		i++;
 	}
-	wolf->map = array;
-/*	ft_putendl(array[0]);
-	ft_putendl(array[1]);
-	ft_putendl(array[2]);
-	ft_putendl(array[3]);
-	ft_putendl(array[4]);
-	ft_putendl(array[5]);*/
+	invalid();
 }
 
-t_st	*ft_init(void)
+void	ft_usage(void)
 {
-	t_st	*wolf;
-
-	wolf = (t_st*)malloc(sizeof(t_st));
-	return (wolf);
+	ft_putendl("usage: ./wolf3d <map_name>");
+	exit(1);
 }
 
-int		main(int ac, char **av)
+int		main(int argc, char **argv)
 {
-	t_st	*wolf;
+	t_st *wolf;
 
-	if (ac != 2)
+	if (argc == 2)
 	{
-		ft_putendl("usage: ./wolf3d <map_name>");
-		return (1);
+		wolf = malloc(sizeof(t_st));
+		ft_read(wolf, argv[1]);
+		wolf->mlx = mlx_init();
+		position(wolf);
+		system("afplay ./src/music.mp3 &");
+		wolf->wind = mlx_new_window(wolf->mlx, WIDTH, HEIGHT, "wolf3d");
+		wolf->img = mlx_new_image(wolf->mlx, WIDTH, HEIGHT);
+		wolf->addr = mlx_get_data_addr(wolf->img,
+			&(wolf->bits_per_pixel), &(wolf->size_line), &(wolf->endian));
+		ft_init(wolf);
+		le_hook(124, wolf);
+		le_hook_help(wolf, 126);
+		mlx_hook(wolf->wind, 17, 1L << 17, ft_esc, wolf);
+		mlx_hook(wolf->wind, 2, 5, le_hook, wolf);
+		mlx_loop(wolf->mlx);
 	}
-	wolf = ft_init();
-	if (ac == 2 && av[1])
-	{
-		ft_open(wolf, av[1]);
-
-	}
+	else
+		ft_usage();
 	return (0);
 }

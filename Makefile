@@ -13,6 +13,12 @@
 NAME	= wolf3d
 
 SRC		= src/main.c    	\
+		  src/read.c 		\
+		  src/hook.c 		\
+		  src/img.c 		\
+		  src/floor.c 		\
+		  src/draw.c 		\
+		  src/init.c
 
 
 OBJ		= $(patsubst src/%.c,obj/%.o,$(SRC))
